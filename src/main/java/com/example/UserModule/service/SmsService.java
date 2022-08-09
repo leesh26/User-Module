@@ -43,15 +43,15 @@ public class SmsService {
     @Value("${sens.from}")
     private String from;
 
-    public SmsDto.SendSmsResponseDto send(String number, String content) throws JsonProcessingException, UnsupportedEncodingException, NoSuchAlgorithmException, InvalidKeyException {
+    public SmsDto.SendSmsResponseDto send(String number, String randNum) throws JsonProcessingException, UnsupportedEncodingException, NoSuchAlgorithmException, InvalidKeyException {
         Long time = System.currentTimeMillis();
         List<SmsDto.MessageRequestDto> messages = new ArrayList<>();
-        messages.add(new SmsDto.MessageRequestDto(number, content));
+        messages.add(new SmsDto.MessageRequestDto(number, "인증번호는" + randNum+ "입니다. 정확히 입력해주세요."));
 
         SmsDto.SmsRequestDto smsRequestDto = SmsDto.SmsRequestDto.builder()
                 .from(from)
                 .type("SMS")
-                .content(content)
+                .content(null)
                 .messages(messages)
                 .build();
 
@@ -66,10 +66,12 @@ public class SmsService {
 
         HttpEntity<String> body = new HttpEntity<>(jsonBody, headers);
 
-
         RestTemplate restTemplate = new RestTemplate();
         String url = "https://sens.apigw.ntruss.com/sms/v2/services/" + serviceId + "/messages";
         SmsDto.SendSmsResponseDto sendSmsResponseDto = restTemplate.postForObject(url, body, SmsDto.SendSmsResponseDto.class);
+
+        // reddis에 전송한 값 정보 저장
+
         return sendSmsResponseDto;
     }
 

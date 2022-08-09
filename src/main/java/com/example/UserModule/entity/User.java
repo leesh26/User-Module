@@ -3,14 +3,16 @@ package com.example.UserModule.entity;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import java.util.Map;
 
 @Entity
-@Getter
+@Getter @Setter
 @NoArgsConstructor
 public class User extends BaseEntity{
     @Id
@@ -25,8 +27,10 @@ public class User extends BaseEntity{
     private Status status;
     private String role;
 
+    private String mailKey;  //인증키가 저장될 컬럼
+
     @Builder
-    public User(Long id, String email, String password, String name, String phone, String nickname, Status status, String role) {
+    public User(Long id, String email, String password, String name, String phone, String nickname, Status status, String role, String mailKey) {
         this.id = id;
         this.email = email;
         this.password = password;
@@ -35,9 +39,10 @@ public class User extends BaseEntity{
         this.nickname = nickname;
         this.status = status;
         this.role = role;
+        this.mailKey = mailKey;
     }
 
-    private enum Status {
+    public enum Status {
         ACTIVE("활성회원"),
         DELETE("탈퇴회원"),
         INACTIVE("비활성회원");

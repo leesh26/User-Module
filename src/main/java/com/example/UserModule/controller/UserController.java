@@ -3,19 +3,23 @@ package com.example.UserModule.controller;
 import com.example.UserModule.dto.UserMapper;
 import com.example.UserModule.dto.UserPostDto;
 import com.example.UserModule.entity.User;
+import com.example.UserModule.mail.MailSendable;
 import com.example.UserModule.service.SmsService;
+import com.example.UserModule.service.UserService;
+import com.example.UserModule.util.MakeRandNum;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.UnsupportedEncodingException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 
 @Controller
@@ -23,29 +27,47 @@ import java.util.Random;
 public class UserController {
     private final UserMapper userMapper;
     private final SmsService smsService;
+    private final MailSendable mailSendable;
+    private final UserService userService;
 
-//    @PostMapping("/join")
-//    public ResponseEntity<String> join(@RequestBody UserPostDto userPostDto){
-//        User user = userMapper.UserPostDtoToUser(userPostDto);
-////        return ResponseEntity.created();
-//    }
+    @PostMapping("/join")
+    public ResponseEntity join(@RequestBody UserPostDto userPostDto) throws InterruptedException {
+        User user = userMapper.UserPostDtoToUser(userPostDto);
+
+        // 메일 전송
+        String randKey = mailSendable.send(user.getEmail(), MakeRandNum.getNum());
+
+        // DB에 상태 저장
+        user.setMailKey(randKey);
+        user.setStatus(User.Status.INACTIVE);
+        user.setRole("ROLE_USER");
+
+        userService.saveUser(user);
+
+        return new ResponseEntity<>(HttpStatus.CREATED);
+    }
 
     @GetMapping("/phoneAuth")
-    public String phoneAuth(@RequestParam String phone) throws UnsupportedEncodingException, NoSuchAlgorithmException, InvalidKeyException, JsonProcessingException {
-        Random rand = new Random();
-        String randNum = "";
-        for (int i = 0; i < 6; i++){
-            String randN = Integer.toString(rand.nextInt(10)); // 0과 10사이의 난수 생성
-            randNum += randN;
+    public ResponseEntity phoneAuth(@RequestParam String phone) throws UnsupportedEncodingException, NoSuchAlgorithmException, InvalidKeyException, JsonProcessingException {
+        smsService.send(phone,  MakeRandNum.getNum());
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @GetMapping("/emailAuth")
+    public @ResponseBody String emailAuth(@RequestParam String email, @RequestParam String key) {
+        User user = userService.findUser(email).orElseThrow(() -> new RuntimeException("일치하는 회원이 없다."));
+        if (user.getMailKey().equals(key)){
+            user.setMailKey(null);
+            user.setStatus(User.Status.ACTIVE);
+            userService.saveUser(user);
+            return "인증완료";
         }
-
-        smsService.send(phone, "인증번호는 " + randNum + "입니다. 정확히 입력해주세요.");
-        return "인증번호 발송 완료!";
+        else return "인증실패";
     }
 
-    @PostMapping("/phoneAuth")
-    public Boolean phoneAuthIsOk(@RequestBody String input){
-        return smsService.checkVerify(input);
-    }
+//    @PostMapping("/phoneAuth")
+//    public Boolean phoneAuthIsOk(@RequestBody String input){
+//        return smsService.checkVerify(input);
+//    }
 
 }
