@@ -31,7 +31,7 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping("/join")
-    public ResponseEntity join(@RequestBody UserPostDto userPostDto) throws InterruptedException {
+    public ResponseEntity<String> join(@RequestBody UserPostDto userPostDto) throws InterruptedException {
         User user = userMapper.UserPostDtoToUser(userPostDto);
 
         // 메일 전송
@@ -44,7 +44,7 @@ public class UserController {
 
         userService.saveUser(user);
 
-        return new ResponseEntity<>(HttpStatus.CREATED);
+        return new ResponseEntity<>(user.getName(), HttpStatus.CREATED);
     }
 
     @GetMapping("/phoneAuth")
@@ -65,9 +65,5 @@ public class UserController {
         else return "인증실패";
     }
 
-//    @PostMapping("/phoneAuth")
-//    public Boolean phoneAuthIsOk(@RequestBody String input){
-//        return smsService.checkVerify(input);
-//    }
 
 }
