@@ -1,36 +1,40 @@
 package com.example.UserModule.entity;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import javax.persistence.*;
 import java.util.Map;
 
 @Entity
-@Getter @Setter
+@Data
 @NoArgsConstructor
 public class User extends BaseEntity{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // 회원 개인 정보
     private String email;
     private String password;
     private String name;
     private String phone;
     private String nickname;
-    private Status status;
-    private String role;
 
+    // 회원 상태
+    @Column(nullable = false)
+    @Enumerated(value = EnumType.STRING)
+    private Status status;
+
+    @Column(nullable = false)
+    @Enumerated(value = EnumType.STRING)
+    private Role role;
+
+    // 인증을 위한 컬럼
     private String mailKey;  //인증키가 저장될 컬럼
+    private String oauthId;
 
     @Builder
-    public User(Long id, String email, String password, String name, String phone, String nickname, Status status, String role, String mailKey) {
+    public User(Long id, String email, String password, String name, String phone, String nickname, Status status, String mailKey) {
         this.id = id;
         this.email = email;
         this.password = password;
@@ -38,7 +42,6 @@ public class User extends BaseEntity{
         this.phone = phone;
         this.nickname = nickname;
         this.status = status;
-        this.role = role;
         this.mailKey = mailKey;
     }
 
@@ -50,6 +53,17 @@ public class User extends BaseEntity{
         @Getter
         private String message;
         Status(String message) {
+            this.message = message;
+        }
+    }
+
+    public enum Role {
+        COMMON("ROLE_USER"),
+        ADMIN("ROLE_ADMIN");
+
+        @Getter
+        private String message;
+        Role(String message) {
             this.message = message;
         }
     }

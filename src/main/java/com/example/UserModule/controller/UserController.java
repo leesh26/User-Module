@@ -40,7 +40,7 @@ public class UserController {
         // DB에 상태 저장
         user.setMailKey(randKey);
         user.setStatus(User.Status.INACTIVE);
-        user.setRole("ROLE_USER");
+        user.setRole(User.Role.COMMON);
 
         userService.saveUser(user);
 
